@@ -16,3 +16,9 @@ class RunStatus(StrEnum):
     QUEUED = 'queued'
     DONE = 'done'
     FAILED = 'failed'
+
+
+class SyncStatus(StrEnum):
+    POSTED = 'posted'
+    PENDING_ORIGINAL = 'pending_original'
+    CONFLICT = 'conflict'

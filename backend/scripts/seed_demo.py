@@ -1,7 +1,10 @@
 import json
 
-from scripts.fixtures import HALLS, INSTRUMENTS, LOANS, REVERSALS, SERIES, USERS
+from scripts.fixtures import HALLS, INSTRUMENTS, LOANS, REVERSALS, SERIES, SYNC_BATCHES, USERS
+from src.constants.domain import Role
 from src.models.db import one, transaction
+from src.schemas.inputs import SyncBatchInput
+from src.services import sync
 from src.services.ledger import insert
 from src.services.pivot import calculate
 from src.services.plans import snapshot_for
@@ -34,8 +37,13 @@ def seed(cursor):
             VALUES ('november-baseline',%s,'done',%s,%s,'analyst','2026-11-16 10:30:00','reviewer')''',
                        (plan['id'], snapshot_json, canonical(result)))
         save_report(cursor.lastrowid, snapshot, result)
+    if not one(cursor, "SELECT id FROM sync_batches WHERE note=%s", (SYNC_BATCHES[0]['note'],)):
+        analyst = {'username': 'analyst', 'role': Role.ANALYST}
+        for batch in SYNC_BATCHES:
+            sync.submit_batch(cursor, SyncBatchInput(**batch), analyst)
     counts = {table: one(cursor, f'SELECT COUNT(*) AS count FROM {table}')['count'] for table in
-              ('users', 'halls', 'instruments', 'receipts', 'plans', 'runs', 'audit_log')}
+              ('users', 'halls', 'instruments', 'receipts', 'plans', 'runs', 'sync_batches', 'sync_items',
+               'audit_log')}
     print(canonical(counts))
 
 

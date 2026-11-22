@@ -26,3 +26,17 @@ REVERSALS = [
     ('CX-1111-01', '2026-11-11', 'CT-1103-02', '核对雁回收件联后冲销五支笙'),
 ]
 SERIES = '十一月上半月调借'
+# 离线补传演示：日期落在 v1 报告（11-02 至 11-15）之外，不改变既定基线。
+# 同一批里演示已入账、等原单、编号冲突三种结果。
+SYNC_BATCHES = [
+    {'note': '演示：雁回馆网络恢复后补传', 'items': [
+        {'reference': 'CT-1117-01', 'kind': 'loan', 'source': 'CT', 'destination': 'YH',
+         'instrument': 'SHENG', 'quantity': 2, 'effective_on': '2026-11-17', 'note': '离线交接单补录'},
+        {'reference': 'CX-1117-01', 'kind': 'reversal', 'original_reference': 'CT-1117-01',
+         'effective_on': '2026-11-17', 'note': '同日误录回冲，自动接上原单'},
+        {'reference': 'CX-1117-02', 'kind': 'reversal', 'original_reference': 'CT-1117-99',
+         'effective_on': '2026-11-17', 'note': '原单尚在路上，先等候'},
+        {'reference': 'CT-1102-01', 'kind': 'loan', 'source': 'CT', 'destination': 'YH',
+         'instrument': 'SHENG', 'quantity': 99, 'effective_on': '2026-11-02', 'note': '重复编号异内容，应扣住'},
+    ]},
+]

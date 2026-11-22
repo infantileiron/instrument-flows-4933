@@ -4,13 +4,15 @@ import { bindLedger, ledgerPage } from './pages/ledger.js';
 import { bindLogin, loginPage } from './pages/login.js';
 import { bindPlans, plansPage } from './pages/plans.js';
 import { bindReport, reportPage } from './pages/report.js';
+import { bindSync, syncPage } from './pages/sync.js';
 import { links, route } from './router/routes.js';
 import { request, session, signOut } from './stores/session.js';
 import { load } from './stores/workspace.js';
 import { escape as e } from './utils/html.js';
 
 const app = document.querySelector('#app');
-const pages = { report: reportPage, ledger: ledgerPage, reversals: () => ledgerPage(true), plans: plansPage, catalog: catalogPage };
+const pages = { report: reportPage, ledger: ledgerPage, reversals: () => ledgerPage(true), sync: syncPage,
+  plans: plansPage, catalog: catalogPage };
 let refreshNumber = 0;
 let pollTimer;
 
@@ -50,6 +52,7 @@ async function refresh(message = '') {
     app.innerHTML = shell(page, pages[page](), message);
     document.querySelector('#logout').addEventListener('click', logout);
     if (page === 'ledger' || page === 'reversals') bindLedger(page === 'reversals', refresh);
+    if (page === 'sync') bindSync(refresh);
     if (page === 'plans') bindPlans(refresh);
     if (page === 'report') pollTimer = bindReport(refresh);
   } catch (failure) {

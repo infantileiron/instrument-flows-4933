@@ -1,6 +1,6 @@
 export const links = [
   ['report', '净流报告', '▤'], ['ledger', '凭据台账', '▥'], ['reversals', '冲销核对', '↶'],
-  ['plans', '透视方案', '⊞'], ['catalog', '馆藏名录', '▧'],
+  ['sync', '离线补传', '⇄'], ['plans', '透视方案', '⊞'], ['catalog', '馆藏名录', '▧'],
 ];
 
 export function route() {

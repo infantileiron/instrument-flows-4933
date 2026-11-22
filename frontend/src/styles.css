@@ -97,6 +97,13 @@ input, select { min-height: 37px; width: 100%; min-width: 0; padding: 6px 8px; b
 .empty { background: var(--card); padding: 24px 19px; color: var(--muted); border-top: 1px solid var(--line); }
 .error-panel p { margin-bottom: 12px; }
 .filter-label { white-space: nowrap; grid-template-columns: auto minmax(96px, 1fr); align-items: center; justify-content: end; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 13px 15px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); }
+.filter-row label { min-width: 150px; }
+.filter-row button { margin-left: auto; }
+textarea { width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--card); font: 12px/1.55 var(--mono); resize: vertical; }
+.hint { color: var(--muted); font-size: 11px; }
+.stats-sync { margin-top: 0; }
+.stats-sync dd { font-size: clamp(21px, 2.1vw, 28px); }
 .report-banner { position: relative; display: flex; justify-content: space-between; align-items: end; gap: 18px; padding: 22px 24px; min-height: 145px;
   border: 1px solid oklch(83% .057 40); border-left: 4px solid var(--accent);
   background: repeating-linear-gradient(to bottom, transparent 0 12px, oklch(83% .040 38 / .48) 12px 13px, transparent 13px 19px) right 21px top 19px / 41% 95px no-repeat, oklch(93.8% .028 47);

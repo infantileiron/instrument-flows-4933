@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
@@ -46,3 +46,34 @@ class PlanInput(Input):
         if not 0 <= (self.end_on - self.start_on).days <= 365:
             raise ValueError('周期须正向且覆盖不超过 366 天')
         return self
+
+
+class SyncItemInput(ReceiptInput):
+    kind: Literal['loan', 'reversal']
+    original_reference: Reference | None = None
+    source: Code | None = None
+    destination: Code | None = None
+    instrument: Code | None = None
+    quantity: int | None = Field(default=None, ge=1, le=500)
+    signer: str | None = Field(default=None, min_length=1, max_length=32)
+
+    @model_validator(mode='after')
+    def check_kind(self):
+        if self.kind == 'loan':
+            missing = [name for name in ('source', 'destination', 'instrument', 'quantity')
+                       if getattr(self, name) is None]
+            if missing:
+                raise ValueError(f'签领缺少字段：{"、".join(missing)}')
+            if self.original_reference:
+                raise ValueError('签领不能引用原凭据编号')
+        else:
+            if not self.original_reference:
+                raise ValueError('冲销须注明原签领编号')
+            if self.original_reference == self.reference:
+                raise ValueError('冲销编号不得与原签领相同')
+        return self
+
+
+class SyncBatchInput(Input):
+    note: str = Field(default='', max_length=200)
+    items: list[SyncItemInput] = Field(min_length=1, max_length=500)
