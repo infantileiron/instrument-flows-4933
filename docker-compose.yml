@@ -1,0 +1,95 @@
+name: instrument-flows
+x-app: &app
+  build: ./backend
+  environment:
+    MYSQL_HOST: db
+    MYSQL_DATABASE: ${MYSQL_DATABASE:-instrument_flows}
+    MYSQL_USER: ${MYSQL_USER:-ensemble}
+    MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ensemble_local_pass}
+    JWT_SECRET: ${JWT_SECRET:-ct-demo-session-change-at-deployment}
+    LEDGER_SECRET: ${LEDGER_SECRET:-ct-demo-ledger-change-before-first-signature}
+    SEED_DEMO: ${SEED_DEMO:-true}
+  volumes:
+    - reports:/reports
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+services:
+  db:
+    image: mysql:8.0
+    container_name: ${COMPOSE_PROJECT_NAME:-instrument-flows}-db
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-instrument_flows}
+      MYSQL_USER: ${MYSQL_USER:-ensemble}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ensemble_local_pass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_local_pass}
+    ports:
+      - '127.0.0.1:${DB_PORT:-17781}:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u "$$MYSQL_USER" "$$MYSQL_DATABASE" -e "SELECT 1" >/dev/null']
+      interval: 3s
+      timeout: 4s
+      retries: 40
+  redis:
+    image: redis:7-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-instrument-flows}-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+  backend:
+    <<: *app
+    container_name: ${COMPOSE_PROJECT_NAME:-instrument-flows}-backend
+    command: [sh, /app/start.sh]
+    ports:
+      - '127.0.0.1:${BACKEND_PORT:-19281}:8000'
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 3s
+      timeout: 4s
+      retries: 30
+  worker:
+    <<: *app
+    container_name: ${COMPOSE_PROJECT_NAME:-instrument-flows}-worker
+    command: [python, -m, src.worker]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "from pathlib import Path; import time; assert time.time() - Path('/tmp/worker-heartbeat').stat().st_mtime < 15"]
+      interval: 3s
+      timeout: 4s
+      retries: 15
+  frontend:
+    build: ./frontend
+    container_name: ${COMPOSE_PROJECT_NAME:-instrument-flows}-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:${FRONTEND_PORT:-18281}:80'
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1/healthz']
+      interval: 3s
+      timeout: 4s
+      retries: 15
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${NETWORK_SUBNET:-10.221.212.0/24}
+volumes:
+  mysql_data:
+  redis_data:
+  reports:
